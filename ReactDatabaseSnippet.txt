@@ -1,0 +1,219 @@
+export default function App() {
+  return (
+    <div> 
+      <Navbar/>
+      <Routes>
+        <Route path='/' element={<ListExamples/>}/>
+        <Route path='/example/:id' element={<SingleExample/>}/>
+        <Route path='/newexample' element={<CreateExample/>}/>
+        <Route path='/exampleedit/:id' element={<ModifyExample/>}/>
+      </Routes>
+    </div>
+  )
+}
+
+export default function Card({data, Get}) {
+    function DeleteExample(){
+        if(window.confirm("Are you sure?")){
+            fetch("https://example.com/example/" + data.id, {
+            method: "DELETE",
+            }).then(() => {Get()})
+        }
+      }
+  return (
+    <div>
+        <div class="card" style={{width: "18rem"}}>
+        <img class="card-img-top" src={`data:image/jpeg;base64,${data.example_picture}`} alt="Card image cap"/>
+        <div class="card-body">
+          <h5 class="card-title">{data.example_name}</h5>
+          <p class="card-text">{data.example_attribute}</p>
+          <a onClick={function(){DeleteExample()}} class="btn btn-danger" > <i class="bi bi-trash-fill"></i> Remove</a>
+          <Link to={"/example/"+ data.id}>
+            <a class="btn btn-primary" > <i class="bi bi-search"></i> Details</a>
+          </Link>
+          <Link to={"/exampleedit/" + data.id}>
+            <a class="btn btn-primary" > <i class="bi bi-search"></i> Modify</a>
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function CreateExample() {
+    const navigate = useNavigate();
+    function AddExample(){
+        fetch("https://example.com/example", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                example_name: document.getElementById("example_name").value,
+                example_attribute: document.getElementById("example_attribute").value,
+                example_picture: document.getElementById("example_picture").value
+            })
+    }).then(() => {navigate("/")})
+    }
+  return (
+    <div>
+        <form action="/action_page.php">
+        <label for="fname">Example name:</label><br/>
+        <input type="text" class="form-control" id="example_name" /><br/>
+        <label for="lname">Example attribute:</label><br/>
+        <input type="text" class="form-control" id="example_attribute" /><br/>
+        <label for="lname">Example image:</label><br/>
+        <input type="text" class="form-control" id="example_picture" /><br/>
+        <br/>
+        <button type="submit" class="btn btn-success" onClick={function(event){event.preventDefault(); AddExample()}}>Upload <i class="bi bi-symmetry-horizontal"></i></button>
+        </form>
+    </div>
+  )
+}
+
+//INDEX.JS:
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { BrowserRouter as Router } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.css';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <Router>
+    <App />
+  </Router>
+);
+//END OF INDEX.JS
+
+export default function ListExamples() {
+  const [example, setExample] = useState([]);
+
+  useEffect(() => {
+    Get()
+  }, [])
+  
+  function Get(){
+    fetch("https://example.com/example", {
+    }).then(data => data.json()).then(data => setExample(data))
+  }
+
+  return (
+    <div>
+      {
+        example.map(data => (<Card data={data} Get={Get}/>))
+      }
+
+      
+    </div>
+  )
+}
+
+export default function ModifyExample() {
+    const navigate = useNavigate();
+    const params = useParams();
+    const [exampleData, setExampleData] = useState({
+        example_name: '',
+        example_attribute: '',
+        example_picture: ''
+    });
+
+    useEffect(() => {
+        fetch("https://example.com/example/" + params.id)
+            .then(response => response.json())
+            .then(data => setExampleData(data));
+    }, [params.id]);
+
+    function ChangeExample() {
+        fetch("https://example.com/example/" + params.id, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                id: Number(params.id),
+                example_name: exampleData.example_name,
+                example_attribute: exampleData.example_attribute,
+                example_picture: exampleData.example_picture
+            })
+        }).then(() => { navigate("/") });
+    }
+
+    return (
+        <div>
+            <form action="/action_page.php">
+                <label htmlFor="example_name">Example name:</label><br />
+                <input type="text" className="form-control" id="example_name" 
+		value={exampleData.example_name} 
+		onChange={(e) => setExampleData({ ...exampleData, example_name: e.target.value })} />
+		<br />
+                <label htmlFor="example_attribute">Example attribute:</label><br />
+                <input type="text" className="form-control" id="example_attribute" 
+		value={exampleData.example_attribute} 
+		onChange={(e) => setExampleData({ ...exampleData, example_attribute: e.target.value })} />
+		<br />
+                <label htmlFor="example_picture">Example picture:</label><br />
+                <input type="text" className="form-control" id="example_picture" 
+		value={exampleData.example_picture} 
+		onChange={(e) => setExampleData({ ...exampleData, example_picture: e.target.value })} />
+		<br />
+                <br />
+                <button type="submit" className="btn btn-success" onClick={function (event) { event.preventDefault();
+		ChangeExample() }}>Save <i className="bi bi-symmetry-horizontal"></i></button>
+            </form>
+        </div>
+    );
+}
+
+export default function SingleExample() {
+
+    const params = useParams();
+
+    const [data, setData] = useState({});
+
+    useEffect(() => {
+        GetId()
+      
+  
+      }, [])
+
+    function GetId(){
+        fetch("https://example.com/example/" + params.id)
+        .then(response => response.json())
+        .then(data => {setData(data);
+        })
+    }
+
+  return (
+    <div>
+        <h1>{data.example_name}</h1>
+        <h1>{data.example_attribute}</h1>
+        <img src={data.example_picture}/>
+    </div>
+  )
+}
+
+export default function Navbar() {
+  return (
+    <div>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">Examples</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav">
+      <li class="nav-item active">
+        <Link class="nav-link" to="/">Examples</Link>
+      </li>
+      <li class="nav-item">
+        <Link class="nav-link" to="/newexample">New Example</Link>
+      </li>
+    </ul>
+  </div>
+</nav>
+    </div>
+  )
+}
